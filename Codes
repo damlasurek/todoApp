@@ -1,0 +1,142 @@
+Xamarin Forms
+Lesson 33
+Author : Mike Dane
+Last Updated : November, 2017
+XAML Intro
+<Button Text="Click Me" Clicked="HandleButtonClick"/>
+public void HandleButtonClick(object sender, EventArgs args)
+{
+    Console.WriteLine("You Clicked Me!");
+}
+Building a text entry
+<StackLayout>
+    <Entry
+        x:Name="TodoInput"
+        Text=""
+        TextChanged="HandleTextChanged"
+        Completed="HandleTextCompleted"
+    />
+    
+    <StackLayout x:Name="TodoList">
+
+    </StackLayout>
+</StackLayout>
+public void HandleTextChanged(object sender, TextChangedEventArgs args)
+{
+    Console.WriteLine(args.NewTextValue);
+}
+
+public void HandleTextCompleted(object sender, EventArgs args)
+{
+    Label newTodo = new Label();
+    newTodo.Text = TodoInput.Text;
+    TodoList.Children.Add(newTodo);
+    TodoInput.Text = "";
+}
+MVVM Intro
+Model is what defines what the actual data we’re working with looks like
+View is the XAML
+ViewModel connect these two things together
+Building the TodoItem Model
+using System;
+namespace AppPractice
+{
+    public class TodoItem
+    {
+        public string TodoText { get; set; }
+        public bool Complete { get; set; }
+
+        public TodoItem(string TodoText, bool Complete)
+        {
+            this.Text = TodoText;
+            this.Complete = Complete;
+        }
+    }
+}
+Building the TodoListViewModel
+using System;
+using System.Collections.ObjectModel;
+
+namespace AppPractice
+{
+    public class TodoListViewModel
+    {
+
+        public ObservableCollection<TodoItem> TodoItems { get; set; };
+
+        public TodoListViewModel()
+        {
+            TodoItems = new ObservableCollection<TodoItem>();
+
+            TodoItems.Add(new TodoItem("First Todo", true));
+        }
+    }
+}
+Wiring the ViewModel to the View
+Don’t forget to remove all the old handlers and code
+<ListView x:Name="TodoList" ItemsSource="{Binding TodoItems}">
+    <ListView.ItemTemplate>
+        <DataTemplate>
+            <ViewCell>
+                <Label Text="{Binding Text}"/>
+            </ViewCell>
+        </DataTemplate>
+    </ListView.ItemTemplate>
+</ListView>
+Adding a new todo
+using System.Windows.Input;
+using Xamarin.Forms;
+...
+
+public ICommand AddTodoCommand => new Command(AddTodoItem);
+public string NewTodoInputValue { get; set; }
+void AddTodoItem()
+{
+    TodoItems.Add(new TodoItem(NewTodoInputValue, false));
+}
+<Entry
+    x:Name="TodoInput"
+    Text="{Binding NewTodoInputValue}"
+    ReturnCommand="{Binding AddTodoCommand}"
+/>
+Adding a trash icon
+Download the trash icon
+<FlexLayout JustifyContent="SpaceBetween" AlignItems="Center" Padding="20, 0">
+    <Label Text="{Binding TodoText}"/>
+    <ImageButton
+        Source="delete.png"
+        Scale="0.5"
+        BackgroundColor="Transparent"   
+    />
+</FlexLayout>
+Removing a todo
+public ICommand RemoveTodoCommand => new Command(RemoveTodoItem);
+void RemoveTodoItem(object o)
+{
+    TodoItem todoItemBeingRemoved = o as TodoItem;
+    TodoItems.Remove(todoItemBeingRemoved);
+}
+<ImageButton
+    Command="{Binding Path=BindingContext.RemoveTodoCommand, Source={x:Reference TodoList}}"
+    CommandParameter="{Binding .}"
+    Source="delete.png"
+    Scale="0.5"
+    BackgroundColor="Transparent"   
+/>
+Adding a checkbox
+Manage NuGet Packages -> “Input Kit”
+xmlns:input="clr-namespace:Plugin.InputKit.Shared.Controls;assembly=Plugin.InputKit"
+...
+
+<ContentView>
+    <FlexLayout AlignItems="Center">
+        <input:CheckBox
+            IsChecked="{Binding Complete}"
+        />
+        <Label Text="{Binding TodoText}" Margin="20, 0"/>
+    </FlexLayout>
+</ContentView>
+Wiring up the toggle button
+<input:CheckBox
+    IsChecked="{Binding Complete}"
+/>
